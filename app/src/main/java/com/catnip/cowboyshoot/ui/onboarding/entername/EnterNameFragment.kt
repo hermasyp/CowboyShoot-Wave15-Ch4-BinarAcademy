@@ -7,13 +7,13 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.catnip.cowboyshoot.databinding.FragmentEnterNameBinding
+import com.catnip.cowboyshoot.ui.menu.MenuGameActivity
 import com.catnip.cowboyshoot.ui.onboarding.OnFinishNavigateListener
 
 
 class EnterNameFragment : Fragment(), OnFinishNavigateListener {
 
     private lateinit var binding: FragmentEnterNameBinding
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -26,16 +26,15 @@ class EnterNameFragment : Fragment(), OnFinishNavigateListener {
 
     override fun onFinishNavigateListener() {
         val name = binding.etName.text.toString().trim()
-        if(name.isEmpty()){
+        if (name.isEmpty()) {
             Toast.makeText(requireContext(), "Please input your name !", Toast.LENGTH_SHORT).show()
-        }else{
+        } else {
             navigateToMenu(name)
         }
     }
 
-    private fun navigateToMenu(name : String) {
-        //todo : navigate to menu
-        Toast.makeText(requireContext(), "Name : $name", Toast.LENGTH_SHORT).show()
+    private fun navigateToMenu(name: String) {
+        MenuGameActivity.startActivity(requireContext(), name)
     }
 }
 

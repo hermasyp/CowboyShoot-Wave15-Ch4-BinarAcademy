@@ -13,4 +13,7 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="text_hint_name">Name</string>
     <string name="text_title_input_name">Input your Name :</string>
+    <string name="placeholder_title_menu_game">Hi %s ! \n Which one do you want to play ?</string>
+    <string name="player_vs_computer">Player vs Computer</string>
+    <string name="player_vs_player">Player vs Player</string>
 </resources>
