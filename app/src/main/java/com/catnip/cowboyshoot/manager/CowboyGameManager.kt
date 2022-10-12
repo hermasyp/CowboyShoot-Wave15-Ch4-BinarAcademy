@@ -25,15 +25,15 @@ interface CowboyGameListener {
     fun onGameFinished(gameState: GameState, winner: Player)
 }
 
-class ComputerEnemyCowboyGameManager(
+open class CowboyGameManagerImpl(
     private val listener: CowboyGameListener
 ) : CowboyGameManager {
 
-    private lateinit var playerOne: Player
+    protected lateinit var playerOne: Player
 
-    private lateinit var playerTwo: Player
+    protected lateinit var playerTwo: Player
 
-    private lateinit var gameState: GameState
+    protected lateinit var state: GameState
 
     override fun initGame() {
         setGameState(GameState.IDLE)
@@ -55,7 +55,7 @@ class ComputerEnemyCowboyGameManager(
     }
 
     override fun movePlayerToTop() {
-        if (gameState != GameState.FINISHED &&
+        if (state != GameState.FINISHED &&
             playerOne.playerPosition.ordinal > PlayerPosition.TOP.ordinal
         ) {
             val currentIndex = playerOne.playerPosition.ordinal
@@ -64,7 +64,7 @@ class ComputerEnemyCowboyGameManager(
     }
 
     override fun movePlayerToBottom() {
-        if (gameState != GameState.FINISHED &&
+        if (state != GameState.FINISHED &&
             playerOne.playerPosition.ordinal < PlayerPosition.BOTTOM.ordinal
         ) {
             val currentIndex = playerOne.playerPosition.ordinal
@@ -87,7 +87,7 @@ class ComputerEnemyCowboyGameManager(
         )
     }
 
-    private fun setPlayerTwoMovement(
+    protected fun setPlayerTwoMovement(
         playerPosition: PlayerPosition = playerTwo.playerPosition,
         playerState: PlayerState = playerTwo.playerState
     ) {
@@ -117,16 +117,16 @@ class ComputerEnemyCowboyGameManager(
         }
     }
 
-    private fun getPlayerPositionByOrdinal(index: Int): PlayerPosition {
+    protected fun getPlayerPositionByOrdinal(index: Int): PlayerPosition {
         return PlayerPosition.values()[index]
     }
 
-    private fun setGameState(newGameState: GameState) {
-        gameState = newGameState
-        listener.onGameStateChanged(gameState)
+    protected fun setGameState(newGameState: GameState) {
+        state = newGameState
+        listener.onGameStateChanged(state)
     }
 
-    private fun startGame() {
+    protected fun startGame() {
         playerTwo.apply {
             playerPosition = getPlayerTwoPosition()
         }
@@ -144,24 +144,75 @@ class ComputerEnemyCowboyGameManager(
             playerTwo
         }
         setGameState(GameState.FINISHED)
-        listener.onGameFinished(gameState, winner)
+        listener.onGameFinished(state, winner)
     }
 
-    private fun resetGame() {
+    protected fun resetGame() {
         initGame()
     }
 
-    private fun getPlayerTwoPosition(): PlayerPosition {
+    protected open fun getPlayerTwoPosition(): PlayerPosition {
         val randomPosition = Random.nextInt(0, until = PlayerPosition.values().size)
         return getPlayerPositionByOrdinal(randomPosition)
     }
 
     override fun startOrRestartGame() {
-        if (gameState != GameState.FINISHED) {
+        if (state != GameState.FINISHED) {
             startGame()
         } else {
             resetGame()
         }
     }
+}
+
+
+class MultiplayerCowboyGameManager(listener: CowboyGameListener) : CowboyGameManagerImpl(listener) {
+
+    override fun initGame() {
+        super.initGame()
+        setGameState(GameState.PLAYER_ONE_TURN)
+    }
+
+    override fun getPlayerTwoPosition(): PlayerPosition {
+        return playerTwo.playerPosition
+    }
+
+    override fun movePlayerToTop() {
+        if (state == GameState.PLAYER_ONE_TURN) {
+            super.movePlayerToTop()
+        } else if (state == GameState.PLAYER_TWO_TURN) {
+            if (playerTwo.playerPosition.ordinal > PlayerPosition.TOP.ordinal) {
+                val currentIndex = playerTwo.playerPosition.ordinal
+                setPlayerTwoMovement(getPlayerPositionByOrdinal(currentIndex - 1), PlayerState.IDLE)
+            }
+        }
+    }
+
+    override fun movePlayerToBottom() {
+        if (state == GameState.PLAYER_ONE_TURN) {
+            super.movePlayerToBottom()
+        } else if (state == GameState.PLAYER_TWO_TURN) {
+            if (playerTwo.playerPosition.ordinal < PlayerPosition.BOTTOM.ordinal) {
+                val currentIndex = playerTwo.playerPosition.ordinal
+                setPlayerTwoMovement(getPlayerPositionByOrdinal(currentIndex + 1), PlayerState.IDLE)
+            }
+        }
+    }
+
+    override fun startOrRestartGame() {
+        when (state) {
+            GameState.PLAYER_ONE_TURN -> {
+                setGameState(GameState.PLAYER_TWO_TURN)
+            }
+            GameState.PLAYER_TWO_TURN -> {
+                startGame()
+            }
+            GameState.FINISHED -> {
+                resetGame()
+            }
+            else -> return
+        }
+    }
+
 }
 

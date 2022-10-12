@@ -1,18 +1,22 @@
 package com.catnip.cowboyshoot.ui.game
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import com.catnip.cowboyshoot.R
 import com.catnip.cowboyshoot.databinding.ActivityGameBinding
 import com.catnip.cowboyshoot.enum.GameState
 import com.catnip.cowboyshoot.enum.PlayerPosition
 import com.catnip.cowboyshoot.enum.PlayerSide
-import com.catnip.cowboyshoot.manager.ComputerEnemyCowboyGameManager
 import com.catnip.cowboyshoot.manager.CowboyGameListener
 import com.catnip.cowboyshoot.manager.CowboyGameManager
+import com.catnip.cowboyshoot.manager.CowboyGameManagerImpl
+import com.catnip.cowboyshoot.manager.MultiplayerCowboyGameManager
 import com.catnip.cowboyshoot.model.Player
 
 class GameActivity : AppCompatActivity(), CowboyGameListener {
@@ -20,8 +24,15 @@ class GameActivity : AppCompatActivity(), CowboyGameListener {
         ActivityGameBinding.inflate(layoutInflater)
     }
 
+    private val isUsingMultiplayerMode: Boolean by lazy {
+        intent.getBooleanExtra(EXTRAS_MULTIPLAYER_MODE, false)
+    }
+
     private val cowboyGameManager: CowboyGameManager by lazy {
-        ComputerEnemyCowboyGameManager(this)
+        if (isUsingMultiplayerMode)
+            MultiplayerCowboyGameManager(this)
+        else
+            CowboyGameManagerImpl(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,11 +61,34 @@ class GameActivity : AppCompatActivity(), CowboyGameListener {
 
     override fun onGameStateChanged(gameState: GameState) {
         binding.tvStatusGame.text = ""
-        binding.tvActionGame.text = when (gameState) {
-            GameState.IDLE -> getString(R.string.text_fire)
-            GameState.STARTED -> getString(R.string.text_fire)
-            GameState.FINISHED -> getString(R.string.text_restart)
+        when (gameState) {
+            GameState.IDLE -> {
+                binding.tvActionGame.text = getString(R.string.text_fire)
+                setCharacterVisibility(isPlayerOneVisible = true, isPlayerTwoVisible = true)
+            }
+            GameState.STARTED -> {
+                binding.tvActionGame.text = getString(R.string.text_fire)
+                setCharacterVisibility(isPlayerOneVisible = true, isPlayerTwoVisible = true)
+            }
+            GameState.FINISHED -> {
+                binding.tvActionGame.text = getString(R.string.text_restart)
+                setCharacterVisibility(isPlayerOneVisible = true, isPlayerTwoVisible = true)
+            }
+            GameState.PLAYER_ONE_TURN -> {
+                binding.tvActionGame.text = getString(R.string.text_lock_player_one)
+                setCharacterVisibility(isPlayerOneVisible = true, isPlayerTwoVisible = false)
+            }
+            GameState.PLAYER_TWO_TURN -> {
+                binding.tvActionGame.text = getString(R.string.text_fire)
+                setCharacterVisibility(isPlayerOneVisible = false, isPlayerTwoVisible = true)
+            }
         }
+
+    }
+
+    private fun setCharacterVisibility(isPlayerOneVisible: Boolean, isPlayerTwoVisible: Boolean) {
+        binding.llPlayerLeft.isVisible = isPlayerOneVisible
+        binding.llPlayerRight.isVisible = isPlayerTwoVisible
     }
 
     override fun onGameFinished(gameState: GameState, winner: Player) {
@@ -101,6 +135,16 @@ class GameActivity : AppCompatActivity(), CowboyGameListener {
                 ivCharBottom.visibility = View.VISIBLE
                 ivCharBottom.setImageDrawable(drawable)
             }
+        }
+    }
+
+    companion object {
+        private const val EXTRAS_MULTIPLAYER_MODE = "EXTRAS_MULTIPLAYER_MODE"
+
+        fun startActivity(context: Context, isUsingMultiplayerMode: Boolean) {
+            context.startActivity(Intent(context, GameActivity::class.java).apply {
+                putExtra(EXTRAS_MULTIPLAYER_MODE, isUsingMultiplayerMode)
+            })
         }
     }
 }

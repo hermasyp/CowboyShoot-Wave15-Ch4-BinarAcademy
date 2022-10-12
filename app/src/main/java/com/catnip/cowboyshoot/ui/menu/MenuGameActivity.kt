@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.catnip.cowboyshoot.R
 import com.catnip.cowboyshoot.databinding.ActivityMenuGameBinding
 import com.catnip.cowboyshoot.enum.GameState
+import com.catnip.cowboyshoot.ui.game.GameActivity
 
 class MenuGameActivity : AppCompatActivity() {
 
@@ -28,10 +29,10 @@ class MenuGameActivity : AppCompatActivity() {
 
     private fun setMenuClickListeners() {
         binding.ivMenuVsComputer.setOnClickListener {
-            //todo : open game vs computer
+            GameActivity.startActivity(this,false)
         }
         binding.ivMenuVsPlayer.setOnClickListener {
-            //todo : open game multiplayer
+            GameActivity.startActivity(this,true)
         }
     }
 
